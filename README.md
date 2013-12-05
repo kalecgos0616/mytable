@@ -5,4 +5,7 @@ compile:
 gcc -o mytable $(mysql_config --cflags) mytable.c $(mysql_config --libs)
 
 useage:
-./mytable note add2 your_message
+	add
+		./mytable note add your_message
+	list
+		./mytable note list

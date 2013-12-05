@@ -118,6 +118,25 @@ int main(int argc, char * *argv) {
 			exit(1);
 		}
 	}
+	
+	//list
+	if( strcmp(action,"list") == 0 ){
+		/* send SQL query */
+		char * sql_buf = "SELECT * FROM note";
+		if (mysql_query(conn, sql_buf)) {
+			fprintf(stderr, "%s\n", mysql_error(conn));
+			exit(1);
+		}
+		printf("sql_buf:%s\n", sql_buf);
+
+		res = mysql_use_result(conn);
+
+		/* output table name */
+		printf("MySQL Tables in mysql database:\n");
+		while ((row = mysql_fetch_row(res)) != NULL)
+			printf("id:%s, message:%s, new_time:%s, update_time:%s \n", row[0], row[1], row[2], row[3]);
+		
+	}
 
 	/* close connection */
 	mysql_free_result(res);
