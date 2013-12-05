@@ -11,7 +11,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define CONFIG_PATH "test.conf"
+#define CONFIG_PATH "my.conf"
 #define SIZE         256
 
 /*config vars*/
