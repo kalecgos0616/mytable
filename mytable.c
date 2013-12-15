@@ -155,6 +155,24 @@ int main(int argc, char * *argv) {
 			exit(1);
 		}
 	}
+	
+	// del
+	if( strcmp(action,"update") == 0 ){
+		//char * note_id = argv[3];
+		int    note_id = atoi(argv[3]);
+		char * message = argv[4];
+		printf("note_id = %d, message = %s\n", note_id, message);
+		/* send SQL query */
+		char * sql = "UPDATE  `note` SET  `message` =  '%s' WHERE  `id` ='%d';";
+		char sql_buf[256];
+		snprintf(sql_buf, sizeof sql_buf, sql, message, note_id);			
+		printf("sql_buf:%s\n", sql_buf);
+
+		if (mysql_query(conn, sql_buf)) {
+			fprintf(stderr, "%s\n", mysql_error(conn));
+			exit(1);
+		}
+	}
 
 	/* close connection */
 	mysql_free_result(res);
