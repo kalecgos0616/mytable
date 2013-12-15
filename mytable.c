@@ -45,7 +45,7 @@ int main(int argc, char * *argv) {
 	//parameter
 	char * table = argv[1];
 	char * action = argv[2];
-	char * message = argv[3];
+	//char * message = argv[3];
 
 	//	printf("table = %s\n", table);
 	printf("action = %s\n", action);
@@ -99,6 +99,7 @@ int main(int argc, char * *argv) {
 
 	// insert
 	if( strcmp(action,"add") == 0 ){
+		char * message = argv[3];
 		/* send SQL query */
 		char * sql = "INSERT INTO `mytable`.`note` (\
 			      `id` ,\
@@ -136,6 +137,23 @@ int main(int argc, char * *argv) {
 		while ((row = mysql_fetch_row(res)) != NULL)
 			printf("id:%s, message:%s, new_time:%s, update_time:%s \n", row[0], row[1], row[2], row[3]);
 		
+	}
+	
+	// del
+	if( strcmp(action,"del") == 0 ){
+		//char * note_id = argv[3];
+		int    note_id = atoi(argv[3]);
+		printf("note_id = %d\n", note_id);
+		/* send SQL query */
+		char * sql = "DELETE FROM `note` WHERE `id` = '%d';";
+		char sql_buf[256];
+		snprintf(sql_buf, sizeof sql_buf, sql, note_id);			
+		printf("sql_buf:%s\n", sql_buf);
+
+		if (mysql_query(conn, sql_buf)) {
+			fprintf(stderr, "%s\n", mysql_error(conn));
+			exit(1);
+		}
 	}
 
 	/* close connection */
