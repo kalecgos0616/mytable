@@ -41,6 +41,77 @@ bool readConfig(){
 	return true;
 }
 
+void listData(MYSQL * conn, MYSQL_RES * res, MYSQL_ROW row){
+	/* send SQL query */
+	char * sql_buf = "SELECT * FROM note";
+	if (mysql_query(conn, sql_buf)) {
+		fprintf(stderr, "%s\n", mysql_error(conn));
+		exit(1);
+	}
+	printf("sql_buf:%s\n", sql_buf);
+
+	res = mysql_use_result(conn);
+
+	/* output table name */
+	printf("function MySQL Tables in mysql database:\n");
+	while ((row = mysql_fetch_row(res)) != NULL)
+		printf("id:%s, message:%s, new_time:%s, update_time:%s \n", row[0], row[1], row[2], row[3]);
+}
+
+void addData(char * message, MYSQL * conn){
+	/* send SQL query */
+	char * sql = "INSERT INTO `mytable`.`note` (\
+			  `id` ,\
+			  `message` ,\
+			  `new_time` ,\
+			  `update_time`\
+			  )\
+			  VALUES (\
+					  NULL , '%s', NOW( ), NOW( )\
+				 );";
+	char sql_buf[256];
+	snprintf(sql_buf, sizeof sql_buf, sql, message);			
+	printf("function addData sql_buf:%s\n", sql_buf);
+
+	if (mysql_query(conn, sql_buf)) {
+		fprintf(stderr, "%s\n", mysql_error(conn));
+		exit(1);
+	}
+}
+
+void delData(int note_id, MYSQL * conn){
+	//char * note_id = argv[3];
+	//int note_id = atoi(argv[3]);
+	printf("note_id = %d\n", note_id);
+	/* send SQL query */
+	char * sql = "DELETE FROM `note` WHERE `id` = '%d';";
+	char sql_buf[256];
+	snprintf(sql_buf, sizeof sql_buf, sql, note_id);			
+	printf("function delData sql_buf:%s\n", sql_buf);
+
+	if (mysql_query(conn, sql_buf)) {
+		fprintf(stderr, "%s\n", mysql_error(conn));
+		exit(1);
+	}
+}
+
+void updateData(int note_id, char * message, MYSQL * conn){
+	//char * note_id = argv[3];
+	//int    note_id = atoi(argv[3]);
+	//char * message = argv[4];
+	printf("note_id = %d, message = %s\n", note_id, message);
+	/* send SQL query */
+	char * sql = "UPDATE  `note` SET  `message` =  '%s' WHERE  `id` ='%d';";
+	char sql_buf[256];
+	snprintf(sql_buf, sizeof sql_buf, sql, message, note_id);			
+	printf("function updateData sql_buf:%s\n", sql_buf);
+
+	if (mysql_query(conn, sql_buf)) {
+		fprintf(stderr, "%s\n", mysql_error(conn));
+		exit(1);
+	}
+}
+
 int main(int argc, char * *argv) {
 	//parameter
 	char * table = argv[1];
@@ -60,8 +131,8 @@ int main(int argc, char * *argv) {
 		return 1;
 	}
 
-	printf("username = %s\n", username);
-	printf("password = %s\n", password);
+	//printf("username = %s\n", username);
+	//printf("password = %s\n", password);
 
 	// DB
 	MYSQL * conn;
@@ -73,8 +144,8 @@ int main(int argc, char * *argv) {
 	//char * password = password;
 	char * database = "mytable";
 
-	printf("user = %s\n", user);
-	printf("password = %s\n", password);
+	//printf("user = %s\n", user);
+	//printf("password = %s\n", password);
 
 	//check
 	conn = mysql_init(NULL);
@@ -99,79 +170,22 @@ int main(int argc, char * *argv) {
 
 	// insert
 	if( strcmp(action,"add") == 0 ){
-		char * message = argv[3];
-		/* send SQL query */
-		char * sql = "INSERT INTO `mytable`.`note` (\
-			      `id` ,\
-			      `message` ,\
-			      `new_time` ,\
-			      `update_time`\
-			      )\
-			      VALUES (\
-					      NULL , '%s', NOW( ), NOW( )\
-				     );";
-		char sql_buf[256];
-		snprintf(sql_buf, sizeof sql_buf, sql, message);			
-		printf("sql_buf:%s\n", sql_buf);
-
-		if (mysql_query(conn, sql_buf)) {
-			fprintf(stderr, "%s\n", mysql_error(conn));
-			exit(1);
-		}
+		addData(argv[3], conn);
 	}
 	
 	//list
 	if( strcmp(action,"list") == 0 ){
-		/* send SQL query */
-		char * sql_buf = "SELECT * FROM note";
-		if (mysql_query(conn, sql_buf)) {
-			fprintf(stderr, "%s\n", mysql_error(conn));
-			exit(1);
-		}
-		printf("sql_buf:%s\n", sql_buf);
-
-		res = mysql_use_result(conn);
-
-		/* output table name */
-		printf("MySQL Tables in mysql database:\n");
-		while ((row = mysql_fetch_row(res)) != NULL)
-			printf("id:%s, message:%s, new_time:%s, update_time:%s \n", row[0], row[1], row[2], row[3]);
-		
+		listData(conn, res, row);
 	}
 	
 	// del
 	if( strcmp(action,"del") == 0 ){
-		//char * note_id = argv[3];
-		int    note_id = atoi(argv[3]);
-		printf("note_id = %d\n", note_id);
-		/* send SQL query */
-		char * sql = "DELETE FROM `note` WHERE `id` = '%d';";
-		char sql_buf[256];
-		snprintf(sql_buf, sizeof sql_buf, sql, note_id);			
-		printf("sql_buf:%s\n", sql_buf);
-
-		if (mysql_query(conn, sql_buf)) {
-			fprintf(stderr, "%s\n", mysql_error(conn));
-			exit(1);
-		}
+		delData(atoi(argv[3]), conn);		
 	}
 	
-	// del
+	// update
 	if( strcmp(action,"update") == 0 ){
-		//char * note_id = argv[3];
-		int    note_id = atoi(argv[3]);
-		char * message = argv[4];
-		printf("note_id = %d, message = %s\n", note_id, message);
-		/* send SQL query */
-		char * sql = "UPDATE  `note` SET  `message` =  '%s' WHERE  `id` ='%d';";
-		char sql_buf[256];
-		snprintf(sql_buf, sizeof sql_buf, sql, message, note_id);			
-		printf("sql_buf:%s\n", sql_buf);
-
-		if (mysql_query(conn, sql_buf)) {
-			fprintf(stderr, "%s\n", mysql_error(conn));
-			exit(1);
-		}
+		updateData(atoi(argv[3]), argv[4], conn);
 	}
 
 	/* close connection */
