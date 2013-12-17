@@ -112,7 +112,32 @@ void updateData(int note_id, char * message, MYSQL * conn){
 	}
 }
 
+#include "FooOBJ.h"
+
+void diddle(FooOBJ obj){
+	/* Perform member functions on FooOBJ.
+	 * If you try these functions on a different type of object,
+	 * you will get a compile-time error
+	 */
+	setFooNumber(obj, 1);
+	setFooString(obj, "somestring");
+
+}
+
 int main(int argc, char * *argv) {
+	MYSQL * conn;
+	conn = mysql_init(NULL);
+
+	FooOBJ fobj;
+	fobj=newFooOBJ(); /* create a new object of type "FooOBJ" */
+
+	//setFooString(fobj, "1234");	
+	setFooNumber(fobj, 123);
+	//dumpFooState(fobj);
+	//printf("server222:%s\n", fobj->server);
+	listData2(fobj);
+	deleteFooOBJ(fobj);
+
 	//parameter
 	char * table = argv[1];
 	char * action = argv[2];
@@ -130,12 +155,14 @@ int main(int argc, char * *argv) {
 		fprintf(stderr,"read config fail!");
 		return 1;
 	}
+	
+	
 
 	//printf("username = %s\n", username);
 	//printf("password = %s\n", password);
 
 	// DB
-	MYSQL * conn;
+	//MYSQL * conn;
 	MYSQL_RES * res;
 	MYSQL_ROW row;
 	/* Change me */
@@ -148,7 +175,14 @@ int main(int argc, char * *argv) {
 	//printf("password = %s\n", password);
 
 	//check
-	conn = mysql_init(NULL);
+	connetDatabase(fobj, conn, username, password);
+	printf("BAER0\n");
+	dumpFooState(fobj);
+	//conn = mysql_init(NULL);
+	printf("BAER1\n");
+	dumpFooState(fobj);
+	
+	
 
 	/* Connect to database */
 	if (!mysql_real_connect(conn, server, user, password, database, 0, NULL, 0)) {
