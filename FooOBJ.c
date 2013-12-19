@@ -9,7 +9,7 @@ struct fooobj {
 	int privateint;
 	char *privateString;
 	char *server;
-	//char *database = "mytable";
+	char *database;
 	MYSQL * conn;
 	MYSQL_RES * res;
 	MYSQL_ROW row;
@@ -29,7 +29,7 @@ FooOBJ newFooOBJ(){
 	FooOBJ foo=(FooOBJ)malloc(sizeof(struct fooobj));
 	bzero(foo, sizeof(struct fooobj));
 	foo->server = "localhost";
-	printf("server:%s\n", foo->server);
+	foo->database = "mytable";
 	return foo;
 }
 
@@ -49,8 +49,8 @@ void setFooString(FooOBJ foo,char *string){
 
 void dumpFooState(FooOBJ foo){
 	if(foo==NULL) return;
-	//printf("value of private int==%d\n", foo->privateint);
-	printf("value of server string==%s\n", foo->server);
+	printf("value of private foo->privateint==%d\n", foo->privateint);
+	printf("value of server foo->server==%s\n", foo->server);
 	//printf("value of private string==");
 	if(foo->privateString == NULL){
 		//puts("(NULL)");
@@ -65,19 +65,88 @@ void deleteFooOBJ(FooOBJ foo){
 	free(foo);
 }
 
-void listData2(FooOBJ foo){
-	printf("listData2:%s\n", foo->privateString);
+void listData(FooOBJ foo){
+	char * sql_buf = "SELECT * FROM note";
+	if (mysql_query(foo->conn, sql_buf)) {
+		fprintf(stderr, "%s\n", mysql_error(foo->conn));
+		exit(1);
+	}
+	printf("sql_buf:%s\n", sql_buf);
+
+	foo->res = mysql_use_result(foo->conn);
+
+	/* output table name */
+	printf("OOP MySQL Tables in mysql database:\n");
+	while ((foo->row = mysql_fetch_row(foo->res)) != NULL){
+		printf("id:%s, message:%s, new_time:%s, update_time:%s \n", foo->row[0], foo->row[1], foo->row[2], foo->row[3]);
+	}
+		
 }
 
-void connetDatabase(FooOBJ foo, MYSQL * conn, char * username, char * password){
+void connetDatabase(FooOBJ foo, char * username, char * password){
 	/* Change me */
-	//char * server = "localhost";
-	char * database = "mytable";
-	printf("connetDatabase0 TEST database:%s, string:%d\n", foo->server, foo->privateint);
-	dumpFooState(foo);
+	printf("connetDatabase0 TEST server:%s, database:%s\n", foo->server, foo->database);
+	
+	foo->conn = mysql_init(NULL);
+	
+	/* Connect to database */
+	if (!mysql_real_connect(foo->conn, "localhost", username, password, "mytable", 0, NULL, 0)) {
+		fprintf(stderr, "%s\n", mysql_error(foo->conn));
+		exit(1);
+	}
 
-	foo->conn = conn;
-	dumpFooState(foo);
-	printf("connetDatabase1 TEST database:%s, string:%d\n", foo->server, foo->privateint);
+}
 
+void addData(FooOBJ foo, char * message){
+	char * sql = "INSERT INTO `mytable`.`note` (\
+			  `id` ,\
+			  `message` ,\
+			  `new_time` ,\
+			  `update_time`\
+			  )\
+			  VALUES (\
+					  NULL , '%s', NOW( ), NOW( )\
+				 );";
+	char sql_buf[256];
+	snprintf(sql_buf, sizeof sql_buf, sql, message);			
+	printf("OOP addData() sql_buf:%s\n", sql_buf);
+
+	if (mysql_query(foo->conn, sql_buf)) {
+		fprintf(stderr, "%s\n", mysql_error(foo->conn));
+		exit(1);
+	}
+}
+
+void delData(FooOBJ foo, int note_id){
+	//char * note_id = argv[3];
+	//int note_id = atoi(argv[3]);
+	printf("note_id = %d\n", note_id);
+	/* send SQL query */
+	char * sql = "DELETE FROM `note` WHERE `id` = '%d';";
+	char sql_buf[256];
+	snprintf(sql_buf, sizeof sql_buf, sql, note_id);			
+	printf("OOP delData() sql_buf:%s\n", sql_buf);
+
+	if (mysql_query(foo->conn, sql_buf)) {
+		fprintf(stderr, "%s\n", mysql_error(foo->conn));
+		exit(1);
+	}
+}
+
+void updateData(FooOBJ foo, int note_id, char * message){
+	printf("note_id = %d, message = %s\n", note_id, message);
+	/* send SQL query */
+	char * sql = "UPDATE  `note` SET  `message` =  '%s' WHERE  `id` ='%d';";
+	char sql_buf[256];
+	snprintf(sql_buf, sizeof sql_buf, sql, message, note_id);			
+	printf("OOP updateData() sql_buf:%s\n", sql_buf);
+
+	if (mysql_query(foo->conn, sql_buf)) {
+		fprintf(stderr, "%s\n", mysql_error(foo->conn));
+		exit(1);
+	}
+}
+void closeConnection(FooOBJ foo){
+	mysql_free_result(foo->res);
+	mysql_close(foo->conn);
 }

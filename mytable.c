@@ -41,77 +41,6 @@ bool readConfig(){
 	return true;
 }
 
-void listData(MYSQL * conn, MYSQL_RES * res, MYSQL_ROW row){
-	/* send SQL query */
-	char * sql_buf = "SELECT * FROM note";
-	if (mysql_query(conn, sql_buf)) {
-		fprintf(stderr, "%s\n", mysql_error(conn));
-		exit(1);
-	}
-	printf("sql_buf:%s\n", sql_buf);
-
-	res = mysql_use_result(conn);
-
-	/* output table name */
-	printf("function MySQL Tables in mysql database:\n");
-	while ((row = mysql_fetch_row(res)) != NULL)
-		printf("id:%s, message:%s, new_time:%s, update_time:%s \n", row[0], row[1], row[2], row[3]);
-}
-
-void addData(char * message, MYSQL * conn){
-	/* send SQL query */
-	char * sql = "INSERT INTO `mytable`.`note` (\
-			  `id` ,\
-			  `message` ,\
-			  `new_time` ,\
-			  `update_time`\
-			  )\
-			  VALUES (\
-					  NULL , '%s', NOW( ), NOW( )\
-				 );";
-	char sql_buf[256];
-	snprintf(sql_buf, sizeof sql_buf, sql, message);			
-	printf("function addData sql_buf:%s\n", sql_buf);
-
-	if (mysql_query(conn, sql_buf)) {
-		fprintf(stderr, "%s\n", mysql_error(conn));
-		exit(1);
-	}
-}
-
-void delData(int note_id, MYSQL * conn){
-	//char * note_id = argv[3];
-	//int note_id = atoi(argv[3]);
-	printf("note_id = %d\n", note_id);
-	/* send SQL query */
-	char * sql = "DELETE FROM `note` WHERE `id` = '%d';";
-	char sql_buf[256];
-	snprintf(sql_buf, sizeof sql_buf, sql, note_id);			
-	printf("function delData sql_buf:%s\n", sql_buf);
-
-	if (mysql_query(conn, sql_buf)) {
-		fprintf(stderr, "%s\n", mysql_error(conn));
-		exit(1);
-	}
-}
-
-void updateData(int note_id, char * message, MYSQL * conn){
-	//char * note_id = argv[3];
-	//int    note_id = atoi(argv[3]);
-	//char * message = argv[4];
-	printf("note_id = %d, message = %s\n", note_id, message);
-	/* send SQL query */
-	char * sql = "UPDATE  `note` SET  `message` =  '%s' WHERE  `id` ='%d';";
-	char sql_buf[256];
-	snprintf(sql_buf, sizeof sql_buf, sql, message, note_id);			
-	printf("function updateData sql_buf:%s\n", sql_buf);
-
-	if (mysql_query(conn, sql_buf)) {
-		fprintf(stderr, "%s\n", mysql_error(conn));
-		exit(1);
-	}
-}
-
 #include "FooOBJ.h"
 
 void diddle(FooOBJ obj){
@@ -125,106 +54,45 @@ void diddle(FooOBJ obj){
 }
 
 int main(int argc, char * *argv) {
-	MYSQL * conn;
-	conn = mysql_init(NULL);
 
 	FooOBJ fobj;
 	fobj=newFooOBJ(); /* create a new object of type "FooOBJ" */
 
-	//setFooString(fobj, "1234");	
-	setFooNumber(fobj, 123);
-	//dumpFooState(fobj);
-	//printf("server222:%s\n", fobj->server);
-	listData2(fobj);
-	deleteFooOBJ(fobj);
-
 	//parameter
 	char * table = argv[1];
 	char * action = argv[2];
-	//char * message = argv[3];
-
-	//	printf("table = %s\n", table);
-	printf("action = %s\n", action);
-	//	printf("message = %s\n", message);
+	
 	memset(username,0,SIZE);
 	memset(password,0,SIZE);
 
 	/*read config*/
-	//	readConfig();
 	if(!readConfig()){
 		fprintf(stderr,"read config fail!");
 		return 1;
 	}
 	
-	
-
-	//printf("username = %s\n", username);
-	//printf("password = %s\n", password);
-
-	// DB
-	//MYSQL * conn;
-	MYSQL_RES * res;
-	MYSQL_ROW row;
 	/* Change me */
 	char * server = "localhost";
-	char * user = username;
-	//char * password = password;
 	char * database = "mytable";
 
-	//printf("user = %s\n", user);
-	//printf("password = %s\n", password);
-
-	//check
-	connetDatabase(fobj, conn, username, password);
-	printf("BAER0\n");
-	dumpFooState(fobj);
-	//conn = mysql_init(NULL);
-	printf("BAER1\n");
-	dumpFooState(fobj);
-	
-	
-
-	/* Connect to database */
-	if (!mysql_real_connect(conn, server, user, password, database, 0, NULL, 0)) {
-		fprintf(stderr, "%s\n", mysql_error(conn));
-		exit(1);
-	}
-
-	/* send SQL query */
-	if (mysql_query(conn, "show tables")) {
-		fprintf(stderr, "%s\n", mysql_error(conn));
-		exit(1);
-	}
-
-	res = mysql_use_result(conn);
-
-	/* output table name */
-	printf("MySQL Tables in mysql database:\n");
-	while ((row = mysql_fetch_row(res)) != NULL) printf("%s \n", row[0]);
-
-	// insert
-	if( strcmp(action,"add") == 0 ){
-		addData(argv[3], conn);
-	}
-	
-	//list
+	//use oop db connection
+	connetDatabase(fobj, username, password);
 	if( strcmp(action,"list") == 0 ){
-		listData(conn, res, row);
+		listData(fobj);
 	}
-	
-	// del
+	if( strcmp(action,"add") == 0 ){
+		addData(fobj, argv[3]);
+	}
 	if( strcmp(action,"del") == 0 ){
-		delData(atoi(argv[3]), conn);		
+		delData(fobj, atoi(argv[3]));		
+	}
+	if( strcmp(action,"update") == 0 ){
+		updateData(fobj, atoi(argv[3]), argv[4]);
 	}
 	
-	// update
-	if( strcmp(action,"update") == 0 ){
-		updateData(atoi(argv[3]), argv[4], conn);
-	}
-
-	/* close connection */
-	mysql_free_result(res);
-	mysql_close(conn);
+	closeConnection(fobj);
+	
+	deleteFooOBJ(fobj);
 
 	return 0;
 }
