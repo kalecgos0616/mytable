@@ -10,6 +10,7 @@ struct fooobj {
 	char *privateString;
 	char *server;
 	char *database;
+	char *table;
 	MYSQL * conn;
 	MYSQL_RES * res;
 	MYSQL_ROW row;
@@ -25,11 +26,12 @@ static int staticvar;
  * Whereas instance variables go in the struct above.
  */
 
-FooOBJ newFooOBJ(){
+FooOBJ newFooOBJ(struct DatabaseConfig DatabaseConfigOBJ){
 	FooOBJ foo=(FooOBJ)malloc(sizeof(struct fooobj));
 	bzero(foo, sizeof(struct fooobj));
-	foo->server = "localhost";
-	foo->database = "mytable";
+	foo->server = DatabaseConfigOBJ.server;
+	foo->database = DatabaseConfigOBJ.database;
+	foo->table = DatabaseConfigOBJ.table;
 	return foo;
 }
 
@@ -66,12 +68,16 @@ void deleteFooOBJ(FooOBJ foo){
 }
 
 void listData(FooOBJ foo){
-	char * sql_buf = "SELECT * FROM note";
+
+	char * sql = "SELECT * FROM %s";
+	char sql_buf[256];
+	snprintf(sql_buf, sizeof sql_buf, sql, foo->table);			
+		
+	printf("sql_buf:%s\n", sql_buf);
 	if (mysql_query(foo->conn, sql_buf)) {
 		fprintf(stderr, "%s\n", mysql_error(foo->conn));
 		exit(1);
 	}
-	printf("sql_buf:%s\n", sql_buf);
 
 	foo->res = mysql_use_result(foo->conn);
 
@@ -98,7 +104,7 @@ void connetDatabase(FooOBJ foo, char * username, char * password){
 }
 
 void addData(FooOBJ foo, char * message){
-	char * sql = "INSERT INTO `mytable`.`note` (\
+	char * sql = "INSERT INTO `mytable`.`%s` (\
 			  `id` ,\
 			  `message` ,\
 			  `new_time` ,\
@@ -108,7 +114,7 @@ void addData(FooOBJ foo, char * message){
 					  NULL , '%s', NOW( ), NOW( )\
 				 );";
 	char sql_buf[256];
-	snprintf(sql_buf, sizeof sql_buf, sql, message);			
+	snprintf(sql_buf, sizeof sql_buf, sql, foo->table, message);			
 	printf("OOP addData() sql_buf:%s\n", sql_buf);
 
 	if (mysql_query(foo->conn, sql_buf)) {
@@ -122,9 +128,9 @@ void delData(FooOBJ foo, int note_id){
 	//int note_id = atoi(argv[3]);
 	printf("note_id = %d\n", note_id);
 	/* send SQL query */
-	char * sql = "DELETE FROM `note` WHERE `id` = '%d';";
+	char * sql = "DELETE FROM `%s` WHERE `id` = '%d';";
 	char sql_buf[256];
-	snprintf(sql_buf, sizeof sql_buf, sql, note_id);			
+	snprintf(sql_buf, sizeof sql_buf, sql, foo->table, note_id);			
 	printf("OOP delData() sql_buf:%s\n", sql_buf);
 
 	if (mysql_query(foo->conn, sql_buf)) {
@@ -136,9 +142,9 @@ void delData(FooOBJ foo, int note_id){
 void updateData(FooOBJ foo, int note_id, char * message){
 	printf("note_id = %d, message = %s\n", note_id, message);
 	/* send SQL query */
-	char * sql = "UPDATE  `note` SET  `message` =  '%s' WHERE  `id` ='%d';";
+	char * sql = "UPDATE  `%s` SET  `message` =  '%s' WHERE  `id` ='%d';";
 	char sql_buf[256];
-	snprintf(sql_buf, sizeof sql_buf, sql, message, note_id);			
+	snprintf(sql_buf, sizeof sql_buf, sql, foo->table, message, note_id);			
 	printf("OOP updateData() sql_buf:%s\n", sql_buf);
 
 	if (mysql_query(foo->conn, sql_buf)) {

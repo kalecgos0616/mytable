@@ -1,5 +1,10 @@
 typedef struct fooobj * FooOBJ;
-FooOBJ newFooOBJ();
+struct DatabaseConfig {
+    char * server;
+    char * database;
+	char * table;
+};
+FooOBJ newFooOBJ(struct DatabaseConfig DatabaseConfigOBJ);
 void setFooNumber(FooOBJ,int);
 void setFooString(FooOBJ,char *); /* make comments about copy or not here */
 void dumpFooState(FooOBJ);      /* dumps debug contents of FooOBJ to stdout */

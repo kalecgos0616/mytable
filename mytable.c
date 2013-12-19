@@ -55,12 +55,17 @@ void diddle(FooOBJ obj){
 
 int main(int argc, char * *argv) {
 
-	FooOBJ fobj;
-	fobj=newFooOBJ(); /* create a new object of type "FooOBJ" */
-
 	//parameter
 	char * table = argv[1];
 	char * action = argv[2];
+	
+	struct DatabaseConfig config;
+	config.server = "localhost";
+	config.database = "mytable";
+	config.table = table;
+
+	FooOBJ fobj;
+	fobj=newFooOBJ(config); /* create a new object of type "FooOBJ" */
 	
 	memset(username,0,SIZE);
 	memset(password,0,SIZE);
@@ -70,6 +75,8 @@ int main(int argc, char * *argv) {
 		fprintf(stderr,"read config fail!");
 		return 1;
 	}
+	
+	
 	
 	/* Change me */
 	char * server = "localhost";
